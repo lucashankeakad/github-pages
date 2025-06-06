@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório Central de Cotações</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+            animation: rotate 20s linear infinite;
+        }
+
+        @keyframes rotate {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+            padding: 30px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .section:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12);
+        }
+
+        .section h2 {
+            color: #1e3c72;
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+            display: flex;
+            align-items: center;
+        }
+
+        .icon {
+            margin-right: 15px;
+            font-size: 1.5rem;
+        }
+
+        .context-info {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-left: 4px solid #0284c7;
+        }
+
+        .context-info p {
+            color: #0c4a6e;
+            font-style: italic;
+            margin-bottom: 0;
+            font-size: 1.05rem;
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .metric-card {
+            background: linear-gradient(135deg, #f8f9ff 0%, #e8f2ff 100%);
+            padding: 25px;
+            border-radius: 12px;
+            border-left: 5px solid #667eea;
+            transition: all 0.3s ease;
+        }
+
+        .metric-card:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.15);
+        }
+
+        .metric-card h3 {
+            color: #1e3c72;
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+        }
+
+        .metric-value {
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .metric-label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .metric-number {
+            font-weight: bold;
+            padding: 4px 12px;
+            border-radius: 20px;
+            background: rgba(102, 126, 234, 0.1);
+            color: #1e3c72;
+        }
+
+        .improvement {
+            color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .degradation {
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .summary-table {
+            overflow-x: auto;
+            margin: 25px 0;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 18px 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        th:first-child {
+            border-top-left-radius: 12px;
+        }
+
+        th:last-child {
+            border-top-right-radius: 12px;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #e5e7eb;
+            transition: background-color 0.2s ease;
+        }
+
+        tr:hover td {
+            background-color: #f8f9ff;
+        }
+
+        tr:last-child td:first-child {
+            border-bottom-left-radius: 12px;
+        }
+
+        tr:last-child td:last-child {
+            border-bottom-right-radius: 12px;
+        }
+
+        .alert {
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border-left: 5px solid;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .alert-warning {
+            background: rgba(251, 191, 36, 0.1);
+            border-color: #fbbf24;
+            color: #92400e;
+        }
+
+        .alert-danger {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: #ef4444;
+            color: #dc2626;
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: #10b981;
+            color: #047857;
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .summary-card {
+            display: flex;
+            align-items: center;
+            padding: 25px;
+            border-radius: 15px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .summary-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .summary-card.success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        .summary-card.info {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+        }
+
+        .summary-icon {
+            font-size: 2.5rem;
+            margin-right: 20px;
+            opacity: 0.9;
+        }
+
+        .summary-content h4 {
+            font-size: 1.2rem;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .summary-content p {
+            font-size: 0.95rem;
+            opacity: 0.9;
+            line-height: 1.4;
+        }
+
+        .summary-metric {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-left: auto;
+            padding: 8px 15px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 25px;
+            backdrop-filter: blur(10px);
+        }
+
+        .card-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .winner-badge {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .baseline-badge {
+            background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+            color: white;
+        }
+
+        .metric-card.winner {
+            border-left: 5px solid #10b981;
+            position: relative;
+        }
+
+        .metric-card.baseline {
+            border-left: 5px solid #6b7280;
+            position: relative;
+        }
+
+        .performance-insights {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 25px;
+            padding: 25px;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .insight-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            transition: all 0.2s ease;
+        }
+
+        .insight-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .insight-icon {
+            font-size: 1.5rem;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+
+        .footer {
+            background: #1e3c72;
+            color: white;
+            text-align: center;
+            padding: 30px;
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin: 0 5px;
+        }
+
+        .badge-success {
+            background: rgba(16, 185, 129, 0.1);
+            color: #047857;
+        }
+
+        .badge-warning {
+            background: rgba(251, 191, 36, 0.1);
+            color: #92400e;
+        }
+
+        .badge-danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .section {
+                padding: 20px;
+            }
+
+            .comparison-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+    <div class="header">
+        <h1>📊 Relatório de Performance - Central de Cotações</h1>
+        <p>Análise Comparativa dos Testes de Carga</p>
+    </div>
+
+    <div class="content">
+        <!-- Performance Summary -->
+        <div class="section">
+            <h2><span class="icon">🎯</span>Resumo Executivo</h2>
+
+            <div class="summary-cards">
+                <div class="summary-card success">
+                    <div class="summary-icon">⚡</div>
+                    <div class="summary-content">
+                        <h4>Performance Geral</h4>
+                        <p>Implementação otimizada apresenta ganhos significativos em ambos os endpoints</p>
+                    </div>
+                    <div class="summary-metric">+71% média</div>
+                </div>
+
+                <div class="summary-card info">
+                    <div class="summary-icon">📊</div>
+                    <div class="summary-content">
+                        <h4>Impacto no Usuário</h4>
+                        <p>Tempo de carregamento da Central de Cotações reduzido drasticamente</p>
+                    </div>
+                    <div class="summary-metric">
+                        < 2s
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hub Listagem Analysis -->
+        <div class="section">
+            <h2><span class="icon">📋</span>Hub Listagem - Análise Comparativa</h2>
+
+            <div class="context-info">
+                <p><strong>Contexto:</strong> Endpoint responsável pela listagem principal de cotações na
+                    Central, exibindo dados paginados com filtros e ordenação.</p>
+            </div>
+
+            <div class="comparison-grid">
+                <div class="metric-card winner">
+                    <div class="card-badge winner-badge">✨ OTIMIZADO</div>
+                    <h3>Hub Listagem Novo</h3>
+                    <div class="metric-value">
+                        <span class="metric-label">Tempo Médio:</span>
+                        <span class="metric-number improvement">2.028ms</span>
+                    </div>
+                    <div class="metric-value">
+                        <span class="metric-label">Tempo Mínimo:</span>
+                        <span class="metric-number">702ms</span>
+                    </div>
+                    <div class="metric-value">
+                        <span class="metric-label">Tempo Máximo:</span>
+                        <span class="metric-number">4.849ms</span>
+                    </div>
+                    <div class="metric-value">
+                        <span class="metric-label">99th Percentil:</span>
+                        <span class="metric-number improvement">4.014ms</span>
+                    </div>
+                    <div class="metric-value">
+                        <span class="metric-label">Amostras:</span>
+                        <span class="metric-number">277</span>
+                    </div>
+                    <div class="metric-value">
+                        <span class="metric-label">Taxa de Erro:</span>
+                        <span class="metric-number improvement">0%</span>
+                    </div>
+                </div>
+
+                <div class="metric-card baseline">
+                    <div class="card-badge baseline-badge">📊 BASELINE</div>
+                    <h3>Hub Listagem Normal</h3>
+                    <div class="metric-value">
+                        <span class="metric-label">Tempo Médio:</span>
+                        <span class="metric-number degradation">2.938ms (+45%)</span>
+                    </div>
+                    <div class="metric-value">
+                        <span class="metric-label">Tempo Mínimo:</span>
+                        <span class="metric-number degradation">1.604ms (+129%)</span>
+                    </div>
+                    <div class="metric-value">
+                        <span class="metric-label">Tempo Máximo:</span>
+                        <span class="metric-number degradation">10.596ms (+119%)</span>
+                    </div>
+                    <div class="metric-value">
+                        <span class="metric-label">99th Percentil:</span>
+                        <span class="metric-number degradation">4.958ms (+24%)</span>
+                    </div>
+                    <div class="metric-value">
+                        <span class="metric-label">Amostras:</span>
+                        <span class="metric-number">276</span>
+                    </div>
+                    <div class="metric-value">
+                        <span class="metric-label">Taxa de Erro:</span>
+                        <span class="metric-number">0%</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="performance-insights">
+                <div class="insight-item">
+                    <span class="insight-icon">🚀</span>
+                    <strong>Ganho de Performance:</strong> 45% mais rápido no tempo médio
+                </div>
+                <div class="insight-item">
+                    <span class="insight-icon">📈</span>
+                    <strong>Consistência:</strong> Menor variação nos tempos de resposta (desvio padrão
+                    reduzido)
+                </div>
+                <div class="insight-item">
+                    <span class="insight-icon">⏱️</span>
+                    <strong>Experiência do Usuário:</strong> Carregamento mais fluido da listagem
+                </div>
+            </div>
+        </div>
+
+        <!-- Hub Informações Analysis -->
+        <div class="section">
+            <h2><span class="icon">📊</span>Hub Informações - Análise Comparativa</h2>
+
+            <div class="context-info">
+                <p><strong>Contexto:</strong> Endpoint crítico que alimenta o card de métricas na Central de
+                    Cotações, exibindo KPIs: total de cotações, aprovações e taxa de conversão.
+                </p>
+            </div>
+
+            <div class="comparison-grid">
+                <div class="metric-card winner">
+                    <div class="card-badge winner-badge">🏆 OTIMIZADO</div>
+                    <h3>Hub Informações Novo</h3>
+                    <div class="metric-value">
+                        <span class="metric-label">Tempo Médio:</span>
+                        <span class="metric-number improvement">1.598ms</span>
+                    </div>
+                    <div class="metric-value">
+                        <span class="metric-label">Tempo Mínimo:</span>
+                        <span class="metric-number">1.049ms</span>
+                    </div>
+                    <div class="metric-value">
+                        <span class="metric-label">Tempo Máximo:</span>
+                        <span class="metric-number">4.942ms</span>
+                    </div>
+                    <div class="metric-value">
+                        <span class="metric-label">99th Percentil:</span>
+                        <span class="metric-number improvement">4.553ms</span>
+                    </div>
+                    <div class="metric-value">
+                        <span class="metric-label">Amostras:</span>
+                        <span class="metric-number">216</span>
+                    </div>
+                    <div class="metric-value">
+                        <span class="metric-label">Taxa de Erro:</span>
+                        <span class="metric-number improvement">0%</span>
+                    </div>
+                </div>
+
+                <div class="metric-card baseline">
+                    <div class="card-badge baseline-badge">📊 BASELINE</div>
+                    <h3>Hub Informações Normal</h3>
+                    <div class="metric-value">
+                        <span class="metric-label">Tempo Médio:</span>
+                        <span class="metric-number degradation">3.168ms (+98%)</span>
+                    </div>
+                    <div class="metric-value">
+                        <span class="metric-label">Tempo Mínimo:</span>
+                        <span class="metric-number degradation">1.902ms (+81%)</span>
+                    </div>
+                    <div class="metric-value">
+                        <span class="metric-label">Tempo Máximo:</span>
+                        <span class="metric-number degradation">7.757ms (+57%)</span>
+                    </div>
+                    <div class="metric-value">
+                        <span class="metric-label">99th Percentil:</span>
+                        <span class="metric-number degradation">6.652ms (+46%)</span>
+                    </div>
+                    <div class="metric-value">
+                        <span class="metric-label">Amostras:</span>
+                        <span class="metric-number">216</span>
+                    </div>
+                    <div class="metric-value">
+                        <span class="metric-label">Taxa de Erro:</span>
+                        <span class="metric-number">0%</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="performance-insights">
+                <div class="insight-item">
+                    <span class="insight-icon">🚀</span>
+                    <strong>Ganho Significativo:</strong> 98% mais rápido - quase 2x a performance
+                </div>
+                <div class="insight-item">
+                    <span class="insight-icon">💡</span>
+                    <strong>Impacto Importante:</strong> KPIs carregam muito mais rapidamente no dashboard
+                </div>
+                <div class="insight-item">
+                    <span class="insight-icon">🎯</span>
+                    <strong>Resultado:</strong> Resposta sub-2ms proporciona melhor fluidez
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="footer">
+        <div
+                style="display: flex; justify-content: space-between; align-items: center; max-width: 800px; margin: 0 auto;">
+            <div>
+                <p style="margin: 0; font-size: 1rem; font-weight: 600;">📊 Relatório de Performance JMeter</p>
+                <p style="margin: 5px 0 0 0; opacity: 0.8;">Análise Comparativa - Central de Cotações</p>
+            </div>
+            <div style="text-align: right;">
+                <p style="margin: 0; font-size: 0.9rem;">Data: Junho 2025</p>
+                <p style="margin: 5px 0 0 0; opacity: 0.8; font-size: 0.85rem;">Versão Otimizada vs Baseline</p>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+
+</html>
