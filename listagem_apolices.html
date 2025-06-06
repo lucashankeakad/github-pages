@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Relatório Central de Cotações</title>
+    <title>Relatório Listagem de Apólices</title>
     <style>
         * {
             margin: 0;
@@ -49,6 +49,11 @@
             height: 200%;
             background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
             animation: rotate 20s linear infinite;
+        }
+
+        .insight-item.success {
+            background-color: #d4edda;
+            border-left: 4px solid #28a745;
         }
 
         @keyframes rotate {
@@ -384,11 +389,6 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         }
 
-        .insight-item.success {
-            background-color: #d4edda;
-            border-left: 4px solid #28a745;
-        }
-
         .insight-icon {
             font-size: 1.5rem;
             margin-right: 12px;
@@ -428,6 +428,45 @@
             color: #dc2626;
         }
 
+        .critical {
+            background-color: #fee;
+            border-color: #fcc;
+        }
+
+        .critical-badge {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .metric-number.critical {
+            color: #dc3545;
+            font-weight: bold;
+        }
+
+        .insight-item.critical {
+            background-color: #fee;
+            border-left: 4px solid #dc3545;
+        }
+
+        .insight-item.warning {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+        }
+
+        .alert {
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border-left: 5px solid;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        .alert-critical {
+            background: rgba(220, 38, 38, 0.1);
+            border-color: #dc2626;
+            color: #dc2626;
+        }
+
         @media (max-width: 768px) {
             .header h1 {
                 font-size: 2rem;
@@ -451,7 +490,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>📊 Relatório de Performance - Central de Cotações</h1>
+            <h1>📊 Relatório de Performance - Listagem de Apólices</h1>
             <p>Análise Comparativa dos Testes de Carga</p>
         </div>
 
@@ -465,190 +504,117 @@
                         <div class="summary-icon">⚡</div>
                         <div class="summary-content">
                             <h4>Performance Geral</h4>
-                            <p>A implementação otimizada apresenta ganhos significativos em ambos os endpoints</p>
+                            <p>A implementação otimizada apresenta ganhos significativos</p>
                         </div>
-                        <div class="summary-metric">+71%</div>
+                        <div class="summary-metric">+867%</div>
                     </div>
 
                     <div class="summary-card info">
                         <div class="summary-icon">📊</div>
                         <div class="summary-content">
                             <h4>Impacto no Usuário</h4>
-                            <p>O tempo de carregamento da Central de Cotações foi reduzido</p>
+                            <p>O tempo de carregamento da Listagem de Apolices é reduzido drasticamente</p>
                         </div>
                         <div class="summary-metric">
-                            -2s
-                        </div>
+                            -42s </div>
                     </div>
                 </div>
             </div>
 
             <!-- Hub Listagem Analysis -->
             <div class="section">
-                <h2><span class="icon">📋</span>Listagem - Análise Comparativa</h2>
+                <h2><span class="icon">📋</span>Análise Comparativa</h2>
 
                 <div class="context-info">
-                    <p><strong>Contexto:</strong> Endpoint responsável pela listagem principal de cotações na
-                        Central, exibindo dados paginados com filtros.</p>
+                    <p><strong>Contexto:</strong> Endpoint responsável pela listagem de apolices,
+                        exibindo dados paginados com filtros.</p>
                 </div>
 
                 <div class="comparison-grid">
                     <div class="metric-card winner">
                         <div class="card-badge winner-badge">🏆 OTIMIZADO</div>
-                        <h3>Listagem de cotações</h3>
+                        <h3>Listagem de apolices</h3>
                         <div class="metric-value">
                             <span class="metric-label">Tempo Médio:</span>
-                            <span class="metric-number improvement">2.028ms (+45%)</span>
+                            <span class="metric-number improvement">4.822s (+867%)</span>
                         </div>
                         <div class="metric-value">
                             <span class="metric-label">Tempo Mínimo:</span>
-                            <span class="metric-number improvement">702ms (+129%)</span>
+                            <span class="metric-number">1.442s</span>
                         </div>
                         <div class="metric-value">
                             <span class="metric-label">Tempo Máximo:</span>
-                            <span class="metric-number improvement">4.849ms (+119%)</span>
+                            <span class="metric-number improvement">12.734s (+854%)</span>
+                        </div>
+                        <div class="metric-value">
+                            <span class="metric-label">Mediana:</span>
+                            <span class="metric-number improvement">4.889s (+860%)</span>
                         </div>
                         <div class="metric-value">
                             <span class="metric-label">99th Percentil:</span>
-                            <span class="metric-number improvement">4.014ms (+24%)</span>
+                            <span class="metric-number improvement">11.902s (+911%)</span>
                         </div>
                         <div class="metric-value">
                             <span class="metric-label">Amostras:</span>
-                            <span class="metric-number">277</span>
+                            <span class="metric-number">272</span>
                         </div>
                         <div class="metric-value">
                             <span class="metric-label">Taxa de Erro:</span>
-                            <span class="metric-number">0%</span>
+                            <span class="metric-number improvement">0%</span>
                         </div>
                     </div>
 
-                    <div class="metric-card baseline">
+                    <div class="metric-card baseline critical">
                         <div class="card-badge baseline-badge">📊 BASELINE</div>
-                        <h3>Listagem de cotações</h3>
+                        <h3>Listagem de apolices</h3>
                         <div class="metric-value">
                             <span class="metric-label">Tempo Médio:</span>
-                            <span class="metric-number degradation">2.938ms</span>
+                            <span class="metric-number critical">46.636s</span>
                         </div>
                         <div class="metric-value">
                             <span class="metric-label">Tempo Mínimo:</span>
-                            <span class="metric-number degradation">1.604ms</span>
+                            <span class="metric-number">1.462s</span>
                         </div>
                         <div class="metric-value">
                             <span class="metric-label">Tempo Máximo:</span>
-                            <span class="metric-number degradation">10.596ms</span>
+                            <span class="metric-number critical">121.547s</span>
+                        </div>
+                        <div class="metric-value">
+                            <span class="metric-label">Mediana:</span>
+                            <span class="metric-number critical">46.948s</span>
                         </div>
                         <div class="metric-value">
                             <span class="metric-label">99th Percentil:</span>
-                            <span class="metric-number degradation">4.958ms</span>
+                            <span class="metric-number critical">120.351s</span>
                         </div>
                         <div class="metric-value">
                             <span class="metric-label">Amostras:</span>
-                            <span class="metric-number">276</span>
+                            <span class="metric-number">274</span>
                         </div>
                         <div class="metric-value">
                             <span class="metric-label">Taxa de Erro:</span>
-                            <span class="metric-number">0%</span>
+                            <span class="metric-number critical">1.09%</span>
                         </div>
                     </div>
                 </div>
 
                 <div class="performance-insights">
                     <div class="insight-item success">
-                        <span class="insight-icon">🚀</span>
-                        <strong>Ganho de Performance:</strong> 45% mais rápido no tempo médio
+                        <span class="insight-icon">⚡</span>
+                        <strong>Redução Drástica:</strong> Tempo médio de 46.6s para 4.8s
                     </div>
                     <div class="insight-item success">
-                        <span class="insight-icon">📈</span>
-                        <strong>Consistência:</strong> Menor variação nos tempos de resposta (desvio padrão
-                        reduzido)
-                    </div>
-                    <div class="insight-item success">
-                        <span class="insight-icon">⏱️</span>
-                        <strong>Experiência do Usuário:</strong> Carregamento mais fluido da listagem
-                    </div>
-                </div>
-            </div>
-
-            <!-- Hub Informações Analysis -->
-            <div class="section">
-                <h2><span class="icon">📊</span>Informações - Análise Comparativa</h2>
-
-                <div class="context-info">
-                    <p><strong>Contexto:</strong> Endpoint que alimenta o card de métricas na Central de
-                        Cotações, exibindo KPIs: total de cotações, aprovações e taxa de conversão.
-                    </p>
-                </div>
-
-                <div class="comparison-grid">
-                    <div class="metric-card winner">
-                        <div class="card-badge winner-badge">🏆 OTIMIZADO</div>
-                        <h3>Hub Informações Novo</h3>
-                        <div class="metric-value">
-                            <span class="metric-label">Tempo Médio:</span>
-                            <span class="metric-number improvement">1.598ms (+98%)</span>
-                        </div>
-                        <div class="metric-value">
-                            <span class="metric-label">Tempo Mínimo:</span>
-                            <span class="metric-number improvement">1.049ms (+81%)</span>
-                        </div>
-                        <div class="metric-value">
-                            <span class="metric-label">Tempo Máximo:</span>
-                            <span class="metric-number improvement">4.942ms (+57%)</span>
-                        </div>
-                        <div class="metric-value">
-                            <span class="metric-label">99th Percentil:</span>
-                            <span class="metric-number improvement">4.553ms (+46%)</span>
-                        </div>
-                        <div class="metric-value">
-                            <span class="metric-label">Amostras:</span>
-                            <span class="metric-number">216</span>
-                        </div>
-                        <div class="metric-value">
-                            <span class="metric-label">Taxa de Erro:</span>
-                            <span class="metric-number">0%</span>
-                        </div>
-                    </div>
-
-                    <div class="metric-card baseline">
-                        <div class="card-badge baseline-badge">📊 BASELINE</div>
-                        <h3>Hub Informações Normal</h3>
-                        <div class="metric-value">
-                            <span class="metric-label">Tempo Médio:</span>
-                            <span class="metric-number degradation">3.168ms</span>
-                        </div>
-                        <div class="metric-value">
-                            <span class="metric-label">Tempo Mínimo:</span>
-                            <span class="metric-number degradation">1.902ms</span>
-                        </div>
-                        <div class="metric-value">
-                            <span class="metric-label">Tempo Máximo:</span>
-                            <span class="metric-number degradation">7.757ms</span>
-                        </div>
-                        <div class="metric-value">
-                            <span class="metric-label">99th Percentil:</span>
-                            <span class="metric-number degradation">6.652ms</span>
-                        </div>
-                        <div class="metric-value">
-                            <span class="metric-label">Amostras:</span>
-                            <span class="metric-number">216</span>
-                        </div>
-                        <div class="metric-value">
-                            <span class="metric-label">Taxa de Erro:</span>
-                            <span class="metric-number">0%</span>
-                        </div>
+                        <span class="insight-icon">🎯</span>
+                        <strong>Estabilidade:</strong> Eliminação total de erros (1.09% → 0%)
                     </div>
                 </div>
 
-                <div class="performance-insights">
-                    <div class="insight-item success">
-                        <span class="insight-icon">🚀</span>
-                        <strong>Ganho Significativo:</strong> 98% mais rápido - quase 2x a performance
-                    </div>
-                    <div class="insight-item success">
-                        <span class="insight-icon">💡</span>
-                        <strong>Impacto Importante:</strong> KPIs carregam muito mais rapidamente na tela
-                    </div>
+                <div class="alert alert-critical">
+                    <strong>Situação Baseline:</strong> O endpoint de listagem de apólices da baseline é lento e instável, com média
+                    de 46,6s por requisição e falhas em timeouts que não são cancelados corretamente, causando
+                    sobrecarga e instabilidade na plataforma.
                 </div>
+                
             </div>
 
         </div>
