@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório de Performance - Processamento CSV vs Excel</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            color: #7f8c8d;
+            font-size: 1.2em;
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .card h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+        }
+
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            padding: 8px 0;
+            border-bottom: 1px solid #ecf0f1;
+        }
+
+        .metric:last-child {
+            border-bottom: none;
+        }
+
+        .metric-label {
+            color: #7f8c8d;
+            font-weight: 500;
+        }
+
+        .metric-value {
+            color: #2c3e50;
+            font-weight: bold;
+        }
+
+        .chart-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-title {
+            color: #2c3e50;
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 400px;
+            margin-bottom: 20px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn.active {
+            background: linear-gradient(45deg, #764ba2, #667eea);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .insights {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .insights h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+
+        .insight-item {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .insight-item h4 {
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+
+        .insight-item p {
+            color: #5a6c7d;
+            line-height: 1.6;
+        }
+
+        .performance-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .expandable {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .expandable:hover {
+            background: #e8f4f8;
+        }
+
+        .expandable .toggle-icon {
+            transition: transform 0.3s ease;
+            float: right;
+            font-size: 1.2em;
+            color: #667eea;
+        }
+
+        .expandable.expanded .toggle-icon {
+            transform: rotate(180deg);
+        }
+
+        .expandable-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            background: #f1f8ff;
+            margin-top: 10px;
+            border-radius: 8px;
+        }
+
+        .expandable-content.expanded {
+            max-height: 1000px;
+            padding: 15px;
+        }
+
+        .strategy-description {
+            color: #5a6c7d;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .strategy-item {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 6px;
+            border-left: 3px solid #667eea;
+        }
+
+        .strategy-name {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .performance-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .controls {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 2em;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #7f8c8d;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Relatório de Performance</h1>
+            <p>Análise Comparativa: Processamento CSV vs Excel</p>
+            <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 10px; text-align: left;">
+                <h4 style="color: #2c3e50; margin-bottom: 10px;">🔧 Ambiente de Teste</h4>
+                <p style="color: #5a6c7d; margin: 5px 0;"><strong>Plataforma:</strong> Minimal API .NET 9</p>
+                <p style="color: #5a6c7d; margin: 5px 0;"><strong>Processador:</strong> AMD Ryzen 7 7730U with Radeon
+                    Graphics (2.00 GHz)</p>
+                <p style="color: #5a6c7d; margin: 5px 0;"><strong>Memória:</strong> 16GB RAM</p>
+                <p style="color: #5a6c7d; margin: 5px 0;"><strong>Headers da planilha:</strong> 36</p>
+            </div>
+        </div>
+
+        <div class="insights">
+            <h2>🎯 Estratégias de Processamento</h2>
+
+            <div class="insight-item expandable" onclick="toggleExpand(this)">
+                <h4>📄 Processamento de Arquivos CSV <span class="toggle-icon">▼</span></h4>
+                <div class="expandable-content">
+                    <p class="strategy-description">O sistema oferece três abordagens distintas para processar arquivos
+                        CSV, cada uma otimizada para diferentes cenários.</p>
+
+                    <div class="strategy-item">
+                        <div class="strategy-name">CSV Bulk (CsvHelper + Lotes)</div>
+                        <div class="strategy-description">Utiliza a biblioteca CsvHelper para ler o arquivo e agrupa as
+                            linhas em lotes de 2000 registros. Imagine que você está lendo um livro e, a cada 20
+                            páginas, passa essas páginas para um grupo de amigos resumir. É uma abordagem equilibrada
+                            que funciona bem para a maioria dos casos, oferecendo boa performance sem complexidade
+                            excessiva.</div>
+                    </div>
+
+                    <div class="strategy-item">
+                        <div class="strategy-name">CSV Pipeline (System.IO.Pipelines)</div>
+                        <div class="strategy-description">A mais sofisticada, utilizando System.IO.Pipelines para
+                            processar o arquivo byte por byte. É como ter uma linha de montagem onde uma pessoa lê letra
+                            por letra e vai passando para outras formarem palavras e frases. Essa abordagem oferece o
+                            máximo de performance e eficiência de memória, mas requer conhecimento avançado de
+                            programação de baixo nível.</div>
+                    </div>
+
+                    <div class="strategy-item">
+                        <div class="strategy-name">CSV Sequential (Linha por Linha)</div>
+                        <div class="strategy-description">A mais conservadora, processando uma linha por vez. É como ler
+                            um livro palavra por palavra, entendendo completamente cada frase antes de passar para a
+                            próxima. Ideal quando a memória é extremamente limitada ou quando você precisa de controle
+                            total sobre cada linha processada.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="insight-item expandable" onclick="toggleExpand(this)">
+                <h4>📊 Processamento de Arquivos Excel <span class="toggle-icon">▼</span></h4>
+                <div class="expandable-content">
+                    <p class="strategy-description">Para arquivos Excel, o sistema oferece cinco estratégias diferentes,
+                        cada uma com suas características únicas.</p>
+
+                    <div class="strategy-item">
+                        <div class="strategy-name">Sequential (ClosedXML Simples)</div>
+                        <div class="strategy-description">A mais simples, usando ClosedXML para carregar o arquivo e
+                            processar linha por linha. É a abordagem mais direta e fácil de entender, perfeita para
+                            arquivos pequenos ou quando a simplicidade do código é prioritária.</div>
+                    </div>
+
+                    <div class="strategy-item">
+                        <div class="strategy-name">Parallel (ClosedXML + Multi-core)</div>
+                        <div class="strategy-description">Também usa ClosedXML, mas processa todas as linhas
+                            simultaneamente usando todos os cores do processador. É como distribuir páginas de um livro
+                            para várias pessoas lerem ao mesmo tempo. Oferece excelente performance para arquivos
+                            médios, mas consome mais memória.</div>
+                    </div>
+
+                    <div class="strategy-item">
+                        <div class="strategy-name">Bulk (OpenXML + Lotes Paralelos)</div>
+                        <div class="strategy-description">Utiliza OpenXML (a biblioteca nativa da Microsoft) para ler o
+                            arquivo em grandes lotes de 5000 linhas, processando cada lote em paralelo. É um meio-termo
+                            entre performance e uso de memória, ideal para arquivos grandes em ambientes de produção.
+                        </div>
+                    </div>
+
+                    <div class="strategy-item">
+                        <div class="strategy-name">Streaming (OpenXML + Channels)</div>
+                        <div class="strategy-description">A mais avançada, combinando OpenXML com Channels do .NET para
+                            criar um pipeline produtor-consumidor. Um thread lê o arquivo continuamente enquanto
+                            múltiplos threads processam os dados conforme chegam. É como uma esteira rolante onde o
+                            conteúdo flui continuamente do leitor para os processadores, ideal para arquivos
+                            gigantescos.</div>
+                    </div>
+
+                    <div class="strategy-item">
+                        <div class="strategy-name">ToCsv (Conversão + Processamento)</div>
+                        <div class="strategy-description">Estratégia única: primeiro converte o Excel para CSV em disco,
+                            depois processa o CSV resultante. É como traduzir um livro técnico para linguagem simples
+                            antes de analisar. Embora adicione uma etapa extra, pode ser mais eficiente para certos
+                            tipos de dados e permite debug mais fácil.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="summary-cards">
+            <div class="card">
+                <h3>🚀 Resumo CSV</h3>
+                <div class="metric">
+                    <span class="metric-label">Total de Testes:</span>
+                    <span class="metric-value">105 (21 cenarios - 5x cada cenario)</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Sucesso:</span>
+                    <span class="metric-value">100%</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Melhor Performance:</span>
+                    <span class="metric-value">Pipeline</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Mais Eficiente:</span>
+                    <span class="metric-value">Sequential</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>📈 Resumo Excel</h3>
+                <div class="metric">
+                    <span class="metric-label">Total de Testes:</span>
+                    <span class="metric-value">210 (42 cenarios - 5x cada cenario)</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Sucesso:</span>
+                    <span class="metric-value">100%</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Melhor Performance:</span>
+                    <span class="metric-value">Bulk</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Mais Consistente:</span>
+                    <span class="metric-value">Streaming</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="performance-grid">
+            <div class="chart-container">
+                <h3 class="chart-title">🔄 Throughput por Estratégia</h3>
+                <div class="controls">
+                    <button class="btn active" onclick="updateChart('throughput', 'all', this)">Todos</button>
+                    <button class="btn" onclick="updateChart('throughput', 'csv', this)">CSV</button>
+                    <button class="btn" onclick="updateChart('throughput', 'excel', this)">Excel</button>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="throughputChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h3 class="chart-title">⚡ Tempo de Execução</h3>
+                <div class="controls">
+                    <button class="btn active" onclick="updateChart('execution', 'all', this)">Todos</button>
+                    <button class="btn" onclick="updateChart('execution', 'csv', this)">CSV</button>
+                    <button class="btn" onclick="updateChart('execution', 'excel', this)">Excel</button>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="executionChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-container" style="display: none;">
+            <h3 class="chart-title">💾 Eficiência de Memória vs Performance</h3>
+            <div class="controls">
+                <button class="btn active" onclick="updateChart('memory', 'all', this)">Todos os Dados</button>
+                <button class="btn" onclick="updateChart('memory', 'large', this)">Arquivos Grandes (≥50k)</button>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="memoryChart"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <h3 class="chart-title">📈 Escalabilidade por Volume de Dados</h3>
+            <div class="chart-wrapper">
+                <canvas id="scalabilityChart"></canvas>
+            </div>
+        </div>
+
+        <div class="performance-grid">
+            <div class="chart-container">
+                <h3 class="chart-title">⏱️ Composição do Tempo - Melhores Estratégias</h3>
+                <div class="chart-wrapper">
+                    <canvas id="timeCompositionChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h3 class="chart-title">🖥️ Utilização de CPU</h3>
+                <div class="controls">
+                    <button class="btn active" onclick="updateChart('cpuUsage', 'all', this)">Todos</button>
+                    <button class="btn" onclick="updateChart('cpuUsage', 'csv', this)">CSV</button>
+                    <button class="btn" onclick="updateChart('cpuUsage', 'excel', this)">Excel</button>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="cpuUsageChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Aguardar carregamento completo da página e bibliotecas
+        window.addEventListener('load', function () {
+            // Verificar se Chart.js foi carregado
+            if (typeof Chart === 'undefined') {
+                console.error('Chart.js não foi carregado');
+                return;
+            }
+
+            // Dados dos testes
+            const csvData = [
+                { strategy: "CSV Bulk", rowCount: 1000, throughput: 102222.22, elapsedMs: 54, memoryMB: 4.41, readingTimeMs: 8, processingTimeMs: 2, validationTimeMs: 0, cpuTimeMs: 12.5 },
+                { strategy: "CSV Pipeline", rowCount: 1000, throughput: 89478.11, elapsedMs: 20, memoryMB: 5.18, readingTimeMs: 8, processingTimeMs: 4, validationTimeMs: 0, cpuTimeMs: 12.5 },
+                { strategy: "CSV Sequential", rowCount: 1000, throughput: 97777.78, elapsedMs: 24, memoryMB: 3.55, readingTimeMs: 10, processingTimeMs: 9, validationTimeMs: 0, cpuTimeMs: 18.75 },
+
+                { strategy: "CSV Bulk", rowCount: 5000, throughput: 81236.80, elapsedMs: 78, memoryMB: 17.51, readingTimeMs: 52, processingTimeMs: 10, validationTimeMs: 0, cpuTimeMs: 96.875 },
+                { strategy: "CSV Pipeline", rowCount: 5000, throughput: 93217.88, elapsedMs: 67, memoryMB: 15.31, readingTimeMs: 37, processingTimeMs: 15, validationTimeMs: 0, cpuTimeMs: 106.25 },
+                { strategy: "CSV Sequential", rowCount: 5000, throughput: 80832.30, elapsedMs: 77, memoryMB: 13.21, readingTimeMs: 63, processingTimeMs: 62, validationTimeMs: 0, cpuTimeMs: 103.125 },
+
+                { strategy: "CSV Bulk", rowCount: 10000, throughput: 88083.19, elapsedMs: 146, memoryMB: 20.39, readingTimeMs: 107, processingTimeMs: 9, validationTimeMs: 1, cpuTimeMs: 350 },
+                { strategy: "CSV Pipeline", rowCount: 10000, throughput: 93268.83, elapsedMs: 134, memoryMB: 15.62, readingTimeMs: 80, processingTimeMs: 26, validationTimeMs: 0, cpuTimeMs: 287.5 },
+                { strategy: "CSV Sequential", rowCount: 10000, throughput: 85868.77, elapsedMs: 143, memoryMB: 17.59, readingTimeMs: 119, processingTimeMs: 119, validationTimeMs: 0, cpuTimeMs: 231.25 },
+
+                { strategy: "CSV Bulk", rowCount: 20000, throughput: 70639.34, elapsedMs: 348, memoryMB: 34.18, readingTimeMs: 248, processingTimeMs: 39, validationTimeMs: 2, cpuTimeMs: 828.125 },
+                { strategy: "CSV Pipeline", rowCount: 20000, throughput: 87718.36, elapsedMs: 282, memoryMB: 40.97, readingTimeMs: 195, processingTimeMs: 36, validationTimeMs: 0, cpuTimeMs: 721.875 },
+                { strategy: "CSV Sequential", rowCount: 20000, throughput: 78460.08, elapsedMs: 303, memoryMB: 15.75, readingTimeMs: 255, processingTimeMs: 255, validationTimeMs: 2, cpuTimeMs: 556.25 },
+
+                { strategy: "CSV Bulk", rowCount: 50000, throughput: 80923.88, elapsedMs: 729, memoryMB: 71.53, readingTimeMs: 528, processingTimeMs: 93, validationTimeMs: 5, cpuTimeMs: 2003.125 },
+                { strategy: "CSV Pipeline", rowCount: 50000, throughput: 86018.23, elapsedMs: 707, memoryMB: 67.40, readingTimeMs: 514, processingTimeMs: 76, validationTimeMs: 0, cpuTimeMs: 2315.625 },
+                { strategy: "CSV Sequential", rowCount: 50000, throughput: 72695.48, elapsedMs: 804, memoryMB: 5.66, readingTimeMs: 688, processingTimeMs: 688, validationTimeMs: 5, cpuTimeMs: 1606.25 },
+
+                { strategy: "CSV Bulk", rowCount: 100000, throughput: 71885.83, elapsedMs: 1678, memoryMB: 164.84, readingTimeMs: 1232, processingTimeMs: 163, validationTimeMs: 12, cpuTimeMs: 4071.875 },
+                { strategy: "CSV Pipeline", rowCount: 100000, throughput: 86615.19, elapsedMs: 1399, memoryMB: 14.57, readingTimeMs: 1017, processingTimeMs: 144, validationTimeMs: 45, cpuTimeMs: 4475 },
+                { strategy: "CSV Sequential", rowCount: 100000, throughput: 73507.11, elapsedMs: 1581, memoryMB: 28.14, readingTimeMs: 1363, processingTimeMs: 1362, validationTimeMs: 10, cpuTimeMs: 3309.375 },
+
+                { strategy: "CSV Bulk", rowCount: 500000, throughput: 74551.09, elapsedMs: 7825, memoryMB: 292.95, readingTimeMs: 5911, processingTimeMs: 819, validationTimeMs: 261, cpuTimeMs: 23281.25 },
+                { strategy: "CSV Pipeline", rowCount: 500000, throughput: 84021.60, elapsedMs: 7129, memoryMB: 185.47, readingTimeMs: 5411, processingTimeMs: 582, validationTimeMs: 421, cpuTimeMs: 21290.625 },
+                { strategy: "CSV Sequential", rowCount: 500000, throughput: 68029.46, elapsedMs: 8618, memoryMB: 50.77, readingTimeMs: 7352, processingTimeMs: 7352, validationTimeMs: 62, cpuTimeMs: 16937.5 }
+            ];
+
+            const excelData = [
+                { strategy: "Sequential", rowCount: 1000, throughput: 4554.38, elapsedMs: 608, memoryMB: 53.20, readingTimeMs: 512, processingTimeMs: 11, validationTimeMs: 0, cpuTimeMs: 562.5 },
+                { strategy: "Parallel", rowCount: 1000, throughput: 6651.02, elapsedMs: 192, memoryMB: 27.99, readingTimeMs: 178, processingTimeMs: 2, validationTimeMs: 0, cpuTimeMs: 606.25 },
+                { strategy: "Streaming", rowCount: 1000, throughput: 10830.94, elapsedMs: 99, memoryMB: 32.90, readingTimeMs: 91, processingTimeMs: 92, validationTimeMs: 0, cpuTimeMs: 115.625 },
+                { strategy: "Bulk", rowCount: 1000, throughput: 11038.33, elapsedMs: 101, memoryMB: 24.94, readingTimeMs: 88, processingTimeMs: 3, validationTimeMs: 0, cpuTimeMs: 184.375 },
+                { strategy: "ToCsv", rowCount: 1000, throughput: 9432.66, elapsedMs: 112, memoryMB: 29.88, readingTimeMs: 96, processingTimeMs: 8, validationTimeMs: 0, cpuTimeMs: 171.875 },
+
+                { strategy: "Sequential", rowCount: 5000, throughput: 7816.13, elapsedMs: 678, memoryMB: 51.02, readingTimeMs: 611, processingTimeMs: 28, validationTimeMs: 0, cpuTimeMs: 934.375 },
+                { strategy: "Parallel", rowCount: 5000, throughput: 7547.52, elapsedMs: 707, memoryMB: 4.21, readingTimeMs: 662, processingTimeMs: 4, validationTimeMs: 0, cpuTimeMs: 1200 },
+                { strategy: "Streaming", rowCount: 5000, throughput: 11909.35, elapsedMs: 429, memoryMB: 62.64, readingTimeMs: 420, processingTimeMs: 420, validationTimeMs: 0, cpuTimeMs: 550 },
+                { strategy: "Bulk", rowCount: 5000, throughput: 11388.60, elapsedMs: 455, memoryMB: 40.71, readingTimeMs: 427, processingTimeMs: 12, validationTimeMs: 0, cpuTimeMs: 925 },
+                { strategy: "ToCsv", rowCount: 5000, throughput: 10264.56, elapsedMs: 496, memoryMB: 15.10, readingTimeMs: 442, processingTimeMs: 43, validationTimeMs: 0, cpuTimeMs: 806.25 },
+
+                { strategy: "Sequential", rowCount: 10000, throughput: 7610.92, elapsedMs: 1383, memoryMB: 35.67, readingTimeMs: 1257, processingTimeMs: 56, validationTimeMs: 0, cpuTimeMs: 2084.375 },
+                { strategy: "Parallel", rowCount: 10000, throughput: 7773.01, elapsedMs: 1353, memoryMB: 17.76, readingTimeMs: 1274, processingTimeMs: 12, validationTimeMs: 1, cpuTimeMs: 2240.625 },
+                { strategy: "Streaming", rowCount: 10000, throughput: 11539.85, elapsedMs: 880, memoryMB: 28.26, readingTimeMs: 866, processingTimeMs: 866, validationTimeMs: 0, cpuTimeMs: 1615.625 },
+                { strategy: "Bulk", rowCount: 10000, throughput: 11708.40, elapsedMs: 886, memoryMB: 22.75, readingTimeMs: 839, processingTimeMs: 15, validationTimeMs: 0, cpuTimeMs: 1431.25 },
+                { strategy: "ToCsv", rowCount: 10000, throughput: 10702.71, elapsedMs: 951, memoryMB: 15.31, readingTimeMs: 883, processingTimeMs: 49, validationTimeMs: 0, cpuTimeMs: 1700 },
+
+                { strategy: "Sequential", rowCount: 20000, throughput: 7286.84, elapsedMs: 2877, memoryMB: 48.26, readingTimeMs: 2618, processingTimeMs: 126, validationTimeMs: 1, cpuTimeMs: 3931.25 },
+                { strategy: "Parallel", rowCount: 20000, throughput: 7609.60, elapsedMs: 2765, memoryMB: 42.14, readingTimeMs: 2602, processingTimeMs: 25, validationTimeMs: 2, cpuTimeMs: 4262.5 },
+                { strategy: "Streaming", rowCount: 20000, throughput: 11639.21, elapsedMs: 1745, memoryMB: 22.57, readingTimeMs: 1718, processingTimeMs: 1718, validationTimeMs: 1, cpuTimeMs: 2584.375 },
+                { strategy: "Bulk", rowCount: 20000, throughput: 11955.97, elapsedMs: 1726, memoryMB: 56.50, readingTimeMs: 1653, processingTimeMs: 19, validationTimeMs: 1, cpuTimeMs: 2343.75 },
+                { strategy: "ToCsv", rowCount: 20000, throughput: 10945.08, elapsedMs: 1850, memoryMB: 13.12, readingTimeMs: 1737, processingTimeMs: 82, validationTimeMs: 1, cpuTimeMs: 3193.75 },
+
+                { strategy: "Sequential", rowCount: 50000, throughput: 7284.78, elapsedMs: 7253, memoryMB: 75.49, readingTimeMs: 6531, processingTimeMs: 331, validationTimeMs: 4, cpuTimeMs: 11050 },
+                { strategy: "Parallel", rowCount: 50000, throughput: 7605.30, elapsedMs: 6916, memoryMB: 20.66, readingTimeMs: 6507, processingTimeMs: 66, validationTimeMs: 5, cpuTimeMs: 10984.375 },
+                { strategy: "Streaming", rowCount: 50000, throughput: 11778.11, elapsedMs: 4304, memoryMB: 15.93, readingTimeMs: 4245, processingTimeMs: 4245, validationTimeMs: 4, cpuTimeMs: 6831.25 },
+                { strategy: "Bulk", rowCount: 50000, throughput: 12215.85, elapsedMs: 4194, memoryMB: 13.73, readingTimeMs: 4064, processingTimeMs: 28, validationTimeMs: 4, cpuTimeMs: 7359.375 },
+                { strategy: "ToCsv", rowCount: 50000, throughput: 11141.33, elapsedMs: 4548, memoryMB: 62.93, readingTimeMs: 4287, processingTimeMs: 187, validationTimeMs: 7, cpuTimeMs: 8462.5 },
+
+                { strategy: "Sequential", rowCount: 100000, throughput: 7178.66, elapsedMs: 14627, memoryMB: 174.07, readingTimeMs: 13229, processingTimeMs: 703, validationTimeMs: 9, cpuTimeMs: 22596.875 },
+                { strategy: "Parallel", rowCount: 100000, throughput: 7437.82, elapsedMs: 14242, memoryMB: 232.04, readingTimeMs: 13217, processingTimeMs: 229, validationTimeMs: 14, cpuTimeMs: 23534.375 },
+                { strategy: "Streaming", rowCount: 100000, throughput: 11891.94, elapsedMs: 8529, memoryMB: 78.38, readingTimeMs: 8409, processingTimeMs: 8409, validationTimeMs: 9, cpuTimeMs: 12915.625 },
+                { strategy: "Bulk", rowCount: 100000, throughput: 12411.18, elapsedMs: 8286, memoryMB: 2.01, readingTimeMs: 7985, processingTimeMs: 70, validationTimeMs: 15, cpuTimeMs: 14134.375 },
+                { strategy: "ToCsv", rowCount: 100000, throughput: 10953.21, elapsedMs: 9275, memoryMB: 64.13, readingTimeMs: 8613, processingTimeMs: 360, validationTimeMs: 15, cpuTimeMs: 16803.125 },
+
+                { strategy: "Sequential", rowCount: 500000, throughput: 6840.02, elapsedMs: 76672, memoryMB: 356.36, readingTimeMs: 68982, processingTimeMs: 4124, validationTimeMs: 47, cpuTimeMs: 118315.625 },
+                { strategy: "Parallel", rowCount: 500000, throughput: 7126.25, elapsedMs: 73877, memoryMB: 15.26, readingTimeMs: 68850, processingTimeMs: 1327, validationTimeMs: 97, cpuTimeMs: 122112.5 },
+                { strategy: "Streaming", rowCount: 500000, throughput: 11506.63, elapsedMs: 44176, memoryMB: 66.16, readingTimeMs: 43457, processingTimeMs: 43458, validationTimeMs: 49, cpuTimeMs: 67003.125 },
+                { strategy: "Bulk", rowCount: 500000, throughput: 12107.12, elapsedMs: 42443, memoryMB: 118.27, readingTimeMs: 40965, processingTimeMs: 336, validationTimeMs: 94, cpuTimeMs: 70562.5 },
+                { strategy: "ToCsv", rowCount: 500000, throughput: 10531.70, elapsedMs: 48114, memoryMB: 20.05, readingTimeMs: 43277, processingTimeMs: 2153, validationTimeMs: 279, cpuTimeMs: 85196.875 }
+            ];
+
+            // Cores para os gráficos
+            const colors = {
+                'CSV Bulk': '#FF6B6B',
+                'CSV Pipeline': '#4ECDC4',
+                'CSV Sequential': '#45B7D1',
+                'Sequential': '#96CEB4',
+                'Parallel': '#FECA57',
+                'Streaming': '#FF9FF3',
+                'Bulk': '#54A0FF',
+                'ToCsv': '#5F27CD'
+            };
+
+            let charts = {};
+
+            // Função para obter dados do gráfico de throughput
+            function getThroughputData(filter) {
+                const volumes = [1000, 5000, 10000, 20000, 50000, 100000, 500000];
+                let datasets = [];
+
+                if (filter === 'all' || filter === 'csv') {
+                    const csvStrategies = ['CSV Bulk', 'CSV Pipeline', 'CSV Sequential'];
+                    csvStrategies.forEach(strategy => {
+                        const data = volumes.map(vol => {
+                            const item = csvData.find(d => d.strategy === strategy && d.rowCount === vol);
+                            return item ? item.throughput : null;
+                        });
+
+                        datasets.push({
+                            label: strategy,
+                            data: data,
+                            backgroundColor: colors[strategy],
+                            borderColor: colors[strategy],
+                            borderWidth: 1
+                        });
+                    });
+                }
+
+                if (filter === 'all' || filter === 'excel') {
+                    const excelStrategies = ['Sequential', 'Parallel', 'Streaming', 'Bulk', 'ToCsv'];
+                    excelStrategies.forEach(strategy => {
+                        const data = volumes.map(vol => {
+                            const item = excelData.find(d => d.strategy === strategy && d.rowCount === vol);
+                            return item ? item.throughput : null;
+                        });
+
+                        datasets.push({
+                            label: `Excel ${strategy}`,
+                            data: data,
+                            backgroundColor: colors[strategy],
+                            borderColor: colors[strategy],
+                            borderWidth: 1
+                        });
+                    });
+                }
+
+                return {
+                    labels: volumes.map(v => v.toLocaleString()),
+                    datasets: datasets
+                };
+            }
+
+            // Função para obter dados do gráfico de execução
+            function getExecutionData(filter) {
+                const volumes = [1000, 5000, 10000, 20000, 50000, 100000, 500000];
+                let datasets = [];
+
+                if (filter === 'all' || filter === 'csv') {
+                    const csvStrategies = ['CSV Bulk', 'CSV Pipeline', 'CSV Sequential'];
+                    csvStrategies.forEach(strategy => {
+                        const data = volumes.map(vol => {
+                            const item = csvData.find(d => d.strategy === strategy && d.rowCount === vol);
+                            return item ? item.elapsedMs : null;
+                        });
+
+                        datasets.push({
+                            label: strategy,
+                            data: data,
+                            borderColor: colors[strategy],
+                            backgroundColor: colors[strategy] + '20',
+                            fill: false,
+                            tension: 0.4
+                        });
+                    });
+                }
+
+                if (filter === 'all' || filter === 'excel') {
+                    const excelStrategies = ['Sequential', 'Parallel', 'Streaming', 'Bulk', 'ToCsv'];
+                    excelStrategies.forEach(strategy => {
+                        const data = volumes.map(vol => {
+                            const item = excelData.find(d => d.strategy === strategy && d.rowCount === vol);
+                            return item ? item.elapsedMs : null;
+                        });
+
+                        datasets.push({
+                            label: `Excel ${strategy}`,
+                            data: data,
+                            borderColor: colors[strategy],
+                            backgroundColor: colors[strategy] + '20',
+                            fill: false,
+                            tension: 0.4
+                        });
+                    });
+                }
+
+                return {
+                    labels: volumes.map(v => v.toLocaleString()),
+                    datasets: datasets
+                };
+            }
+
+            // Função para obter dados do gráfico de memória
+            function getMemoryData(filter) {
+                let datasets = [];
+                let data = [];
+
+                if (filter === 'all') {
+                    data = [...csvData, ...excelData];
+                } else if (filter === 'large') {
+                    data = [...csvData, ...excelData].filter(d => d.rowCount >= 50000);
+                }
+
+                const strategies = [...new Set(data.map(d => d.strategy))];
+
+                strategies.forEach(strategy => {
+                    const strategyData = data.filter(d => d.strategy === strategy);
+                    const points = strategyData.map(d => ({
+                        x: d.memoryMB,
+                        y: d.throughput,
+                        rowCount: d.rowCount
+                    }));
+
+                    datasets.push({
+                        label: strategy,
+                        data: points,
+                        backgroundColor: colors[strategy] || '#999',
+                        borderColor: colors[strategy] || '#999',
+                        pointRadius: 6,
+                        pointHoverRadius: 8
+                    });
+                });
+
+                return { datasets: datasets };
+            }
+
+            // Função para obter dados do gráfico de composição do tempo (apenas melhores estratégias)
+            function getTimeCompositionData() {
+                const volumes = [1000, 5000, 10000, 20000, 50000, 100000, 500000];
+                let datasets = [];
+
+                // Melhores estratégias: CSV Bulk e Excel Bulk
+                const bestStrategies = [
+                    { strategy: 'CSV Bulk', data: csvData, color: '#4ECDC4' },
+                    { strategy: 'Bulk', data: excelData, color: '#54A0FF', label: 'Excel Bulk' }
+                ];
+
+                const timeTypes = [
+                    { key: 'readingTimeMs', label: 'Leitura', color: '#FF6B6B' },
+                    { key: 'validationTimeMs', label: 'Validação', color: '#4ECDC4' }
+                ];
+
+                bestStrategies.forEach(strategyInfo => {
+                    timeTypes.forEach(timeType => {
+                        const data = volumes.map(vol => {
+                            const item = strategyInfo.data.find(d => d.strategy === strategyInfo.strategy && d.rowCount === vol);
+                            return item ? item[timeType.key] : null;
+                        });
+
+                        const displayLabel = strategyInfo.label || strategyInfo.strategy;
+
+                        datasets.push({
+                            label: `${displayLabel} - ${timeType.label}`,
+                            data: data,
+                            backgroundColor: timeType.color,
+                            borderColor: timeType.color,
+                            borderWidth: 1,
+                            stack: strategyInfo.strategy
+                        });
+                    });
+                });
+
+                return {
+                    labels: volumes.map(v => v.toLocaleString()),
+                    datasets: datasets
+                };
+            }
+
+            // Função para obter dados do gráfico de uso de CPU
+            function getCpuUsageData(filter) {
+                const volumes = [1000, 5000, 10000, 20000, 50000, 100000, 500000];
+                let datasets = [];
+
+                if (filter === 'all' || filter === 'csv') {
+                    const csvStrategies = ['CSV Bulk', 'CSV Pipeline', 'CSV Sequential'];
+                    csvStrategies.forEach(strategy => {
+                        const data = volumes.map(vol => {
+                            const item = csvData.find(d => d.strategy === strategy && d.rowCount === vol);
+                            if (!item) return null;
+                            // CPU Utilization = (CPU Time / Elapsed Time) * 100
+                            return (item.cpuTimeMs / item.elapsedMs) * 100;
+                        });
+
+                        datasets.push({
+                            label: strategy,
+                            data: data,
+                            borderColor: colors[strategy],
+                            backgroundColor: colors[strategy] + '20',
+                            fill: false,
+                            tension: 0.4,
+                            pointRadius: 4
+                        });
+                    });
+                }
+
+                if (filter === 'all' || filter === 'excel') {
+                    const excelStrategies = ['Sequential', 'Parallel', 'Streaming', 'Bulk', 'ToCsv'];
+                    excelStrategies.forEach(strategy => {
+                        const data = volumes.map(vol => {
+                            const item = excelData.find(d => d.strategy === strategy && d.rowCount === vol);
+                            if (!item) return null;
+                            // CPU Utilization = (CPU Time / Elapsed Time) * 100
+                            return (item.cpuTimeMs / item.elapsedMs) * 100;
+                        });
+
+                        datasets.push({
+                            label: `Excel ${strategy}`,
+                            data: data,
+                            borderColor: colors[strategy],
+                            backgroundColor: colors[strategy] + '20',
+                            fill: false,
+                            tension: 0.4,
+                            pointRadius: 4
+                        });
+                    });
+                }
+
+                return {
+                    labels: volumes.map(v => v.toLocaleString()),
+                    datasets: datasets
+                };
+            }
+            function getScalabilityData() {
+                const volumes = [1000, 5000, 10000, 20000, 50000, 100000, 500000];
+                let datasets = [];
+
+                const topStrategies = ['CSV Bulk', 'CSV Pipeline', 'Streaming', 'Bulk'];
+
+                topStrategies.forEach(strategy => {
+                    let data = [];
+
+                    if (strategy.startsWith('CSV')) {
+                        data = volumes.map(vol => {
+                            const item = csvData.find(d => d.strategy === strategy && d.rowCount === vol);
+                            return item ? item.throughput : null;
+                        });
+                    } else {
+                        data = volumes.map(vol => {
+                            const item = excelData.find(d => d.strategy === strategy && d.rowCount === vol);
+                            return item ? item.throughput : null;
+                        });
+                    }
+
+                    datasets.push({
+                        label: strategy.startsWith('CSV') ? strategy : `Excel ${strategy}`,
+                        data: data,
+                        borderColor: colors[strategy],
+                        backgroundColor: colors[strategy] + '20',
+                        fill: false,
+                        tension: 0.4,
+                        pointRadius: 4
+                    });
+                });
+
+                return {
+                    labels: volumes,
+                    datasets: datasets
+                };
+            }
+
+            // Inicializar gráficos
+            function initializeCharts() {
+                // Gráfico de Throughput
+                const ctxThroughput = document.getElementById('throughputChart').getContext('2d');
+                charts.throughput = new Chart(ctxThroughput, {
+                    type: 'bar',
+                    data: getThroughputData('all'),
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (context) {
+                                        return `${context.dataset.label}: ${context.parsed.y.toLocaleString()} registros/seg`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Registros por Segundo'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Volume de Registros'
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // Gráfico de Execução
+                const ctxExecution = document.getElementById('executionChart').getContext('2d');
+                charts.execution = new Chart(ctxExecution, {
+                    type: 'line',
+                    data: getExecutionData('all'),
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (context) {
+                                        return `${context.dataset.label}: ${(context.parsed.y / 1000).toFixed(1)}s`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Tempo (ms)'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Volume de Registros'
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // Gráfico de Memória
+                const ctxMemory = document.getElementById('memoryChart').getContext('2d');
+                charts.memory = new Chart(ctxMemory, {
+                    type: 'scatter',
+                    data: getMemoryData('all'),
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (context) {
+                                        const data = context.raw;
+                                        return `${context.dataset.label}: ${data.x.toFixed(1)} MB, ${data.y.toLocaleString()} reg/s (${data.rowCount} registros)`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Uso de Memória (MB)'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: 'Throughput (registros/seg)'
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // Gráfico de Composição do Tempo
+                const ctxTimeComposition = document.getElementById('timeCompositionChart').getContext('2d');
+                charts.timeComposition = new Chart(ctxTimeComposition, {
+                    type: 'bar',
+                    data: getTimeCompositionData(),
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (context) {
+                                        return `${context.dataset.label}: ${context.parsed.y}ms`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Volume de Registros'
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                stacked: true,
+                                title: {
+                                    display: true,
+                                    text: 'Tempo (ms)'
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // Gráfico de Uso de CPU
+                const ctxCpuUsage = document.getElementById('cpuUsageChart').getContext('2d');
+                charts.cpuUsage = new Chart(ctxCpuUsage, {
+                    type: 'line',
+                    data: getCpuUsageData('all'),
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (context) {
+                                        return `${context.dataset.label}: ${context.parsed.y.toFixed(1)}%`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Volume de Registros'
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                max: 500,
+                                title: {
+                                    display: true,
+                                    text: 'Utilização de CPU (%)'
+                                }
+                            }
+                        }
+                    }
+                });
+                const ctxScalability = document.getElementById('scalabilityChart').getContext('2d');
+                charts.scalability = new Chart(ctxScalability, {
+                    type: 'line',
+                    data: getScalabilityData(),
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (context) {
+                                        return `${context.dataset.label}: ${context.parsed.y.toLocaleString()} registros/seg`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Throughput (registros/seg)'
+                                }
+                            },
+                            x: {
+                                type: 'logarithmic',
+                                title: {
+                                    display: true,
+                                    text: 'Volume de Registros (escala log)'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Função global para atualizar gráficos
+            window.updateChart = function (chartType, filter, button) {
+                updateActiveButton(button);
+
+                if (chartType === 'throughput') {
+                    charts.throughput.data = getThroughputData(filter);
+                    charts.throughput.update();
+                } else if (chartType === 'execution') {
+                    charts.execution.data = getExecutionData(filter);
+                    charts.execution.update();
+                } else if (chartType === 'memory') {
+                    charts.memory.data = getMemoryData(filter);
+                    charts.memory.update();
+                } else if (chartType === 'timeComposition') {
+                    // Não precisa de atualização pois é fixo para melhores estratégias
+                    return;
+                } else if (chartType === 'cpuUsage') {
+                    charts.cpuUsage.data = getCpuUsageData(filter);
+                    charts.cpuUsage.update();
+                }
+            };
+
+            function updateActiveButton(activeBtn) {
+                const container = activeBtn.parentElement;
+                container.querySelectorAll('.btn').forEach(btn => btn.classList.remove('active'));
+                activeBtn.classList.add('active');
+            }
+
+            // Função para expandir/contrair seções
+            window.toggleExpand = function (element) {
+                const content = element.querySelector('.expandable-content');
+                const icon = element.querySelector('.toggle-icon');
+
+                if (content.classList.contains('expanded')) {
+                    content.classList.remove('expanded');
+                    element.classList.remove('expanded');
+                    icon.textContent = '▼';
+                } else {
+                    content.classList.add('expanded');
+                    element.classList.add('expanded');
+                    icon.textContent = '▲';
+                }
+            };
+
+            // Inicializar todos os gráficos
+            initializeCharts();
+        });
+    </script>
+</body>
+
+</html>
